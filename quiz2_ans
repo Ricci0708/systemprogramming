@@ -1,0 +1,39 @@
+1. parameter, return value, return type, comment
+2. 744
+3.d: directory
+  l: link
+  -: file
+4.chmod o 1 +
+5.-r--r-x-w- 452
+6.022
+7.root
+8.
+9. softlink, doesnot effect anythong cause b is link file and a is original file
+10. hardlink 
+    -rwxr-wr-w 11 bob bob 172 (modified date)
+11. 하드링크의 경우 원본파일을 삭제해도 남아있다. 하지만 하드링크의 경우 폴더를 링크 하지는 못한다. 
+12. 6
+    argv[0]: ./a.out
+    argv[1]: a
+    argv[2]: b
+    argv[3]: 1
+    argv[4]: 2
+    argv[5]: love
+13.
+14.
+15.
+16. a) fred.o libfoo.a program
+    b) 
+17.
+18.
+19. process
+20. O
+21. count = 10000
+    count = 10000
+22. 단순히 생각하면 20000이라고 생각할수있으나 쓰레드에서 동시에 접근을 해서 값이 예상보다 작게 나올수도 있다.
+23.80000이 나올수도 있지만 80000보다 작게 나올것으로 예상된다.
+24.a) pthread_mutex_lock(&pd->lock); ==> 키를 잠근다
+   b) pthread_mutex_unlock(&pd->lock); ==> 키를 푼다
+   c) pthread_mutex_init(&pd->lock,NULL); ==> 키를 초기화(생성)
+25.쓰레드 두개가 동시에 돌아서 동시성때문에 2나 1이 나올수있다. 그런데 대개의 경우 2가 나올것같다.
+26.deadlock의 발생한다. thr_main1과 thr_main2에서 각각을 락을 하는데 이는 서로가 서로가 락을 하고 상대방이 언락을 해줄때까지 대기하고있는 상태가 되기때문에 deadlock이 된다.
