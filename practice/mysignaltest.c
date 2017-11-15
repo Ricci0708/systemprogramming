@@ -12,7 +12,11 @@ unsigned int sleep2(unsigned int seconds);
 
 int main(void)
 {
+	sigset_t newmask, oldmask, pendmask;
+
 	unsigned int unslept;
+
+
 
 	if (signal(SIGINT, sig_int) == SIG_ERR){
 		fprintf(stderr, "signal(SIGINT) error");
@@ -32,6 +36,13 @@ static void sig_alrm(int signo)
 
 static void sig_int(int signo)
 {
+	sigset_t newmask, oldmask;
+
+	sigemptyset(&newmask);
+	sigemptyset(&oldmask);
+	sigaddset(&newmask, SIGALRM);
+	sigprocmask(SIG_SETMASK, &newmask, NULL);
+
 	int i,j;
 	volatile int k;
 
@@ -40,27 +51,25 @@ static void sig_int(int signo)
 	/*
 	 * 아래 for문이 5초 이상 실행되도록 적당히 바꿔주세요. 
 	 */
-	for (i = 0; i<300000; i++)
+	for (i = 0; i<30000; i++)
 		for (j = 0; j<4000; j++)
 			k += i*j;
 	
 	printf("sig_int finished\n");
+	sigprocmask(SIG_SETMASK, &oldmask, &newmask);
 }
 
 unsigned int sleep2(unsigned int seconds)
 {
 	if (signal(SIGALRM, sig_alrm) == SIG_ERR){
-		printf("1\n");
 		return seconds;
 	}
 
 	if (setjmp(env_alrm) == 0){
-		printf("2\n");
 
 		alarm(seconds);
 		pause();
 	}
-	printf("3\n");
 
 	return alarm(0);
 }
