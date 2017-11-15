@@ -51,7 +51,7 @@ static void sig_int(int signo)
 	/*
 	 * 아래 for문이 5초 이상 실행되도록 적당히 바꿔주세요. 
 	 */
-	for (i = 0; i<30000; i++)
+	for (i = 0; i<300000; i++)
 		for (j = 0; j<4000; j++)
 			k += i*j;
 	
@@ -61,6 +61,13 @@ static void sig_int(int signo)
 
 unsigned int sleep2(unsigned int seconds)
 {
+	// sigset_t newmask, oldmask;
+
+	// sigemptyset(&newmask);
+	// sigemptyset(&oldmask);
+	// sigaddset(&newmask, 2);
+	// sigprocmask(SIG_SETMASK, &newmask, NULL);
+
 	if (signal(SIGALRM, sig_alrm) == SIG_ERR){
 		return seconds;
 	}
@@ -70,6 +77,8 @@ unsigned int sleep2(unsigned int seconds)
 		alarm(seconds);
 		pause();
 	}
+	// sigprocmask(SIG_SETMASK, &oldmask, &newmask);
+
 
 	return alarm(0);
 }

@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 FILE* fp;
-int* pt;
 pid_t arr[3];
 int n;
 
@@ -32,7 +31,7 @@ int main(int argc, char* argv[]){
 	isExist = access(argv[2],F_OK);
 
 	if(isExist == 0){
-		fp = fopen(argv[2],"rw");
+		fp = fopen(argv[2],"r+");
 		int check;
 		fread(&check,sizeof(int),1,fp);
 
@@ -48,10 +47,18 @@ int main(int argc, char* argv[]){
 	}
 
 	arr[0] = getpid();
-	arr[1] = fork();
+	if ((arr[1] = fork())==0){
+		pause();
+		kill(arr[0],SIGALRM);
+
+	}
+
 
 	if(getpid() == arr[0]){
-		arr[2] = fork();
+		if((arr[2] = fork()) ==0){
+			pause();
+			kill(arr[1],SIGALRM);
+		}
 	}
 
 	if(getpid() == arr[0]){
@@ -60,37 +67,38 @@ int main(int argc, char* argv[]){
 
 	while((*pt) < n){
 		if(getpid() == arr[0]){
+			printf("p1\n");
 			pause();
-//			printf("p1: %d\n",num);
 			kill(arr[2], SIGALRM);
 		}
-		if(getppid() == arr[0] && arr[1] == 0){
-			pause();
-//			printf("p2: %d\n",num);
 
-			kill(getppid(),SIGALRM);
+		else if(getppid() == arr[0] && arr[1] == 0){
+			printf("p2\n");
+
+			pause();
+			kill(arr[0],SIGALRM);
 		}
-		if(getppid() == arr[0] && arr[1] != 0){
-			pause();
-			// printf("p3: %d\n",num);
 
+		else{
+			printf("p3\n");
+			pause();
 			kill(arr[1],SIGALRM);
 		}
 
 	}
-
 
 	return 0;
 }
 
 
 void sig_fn(){
+	int i;
 	fseek(fp,0,SEEK_SET);
-	fscanf(fp,"%d",&(*pt));
-	if ((*pt) < n){
+	fscanf(fp,"%d",&i);
+	if (i < n){
 		fseek(fp,0,SEEK_SET);
-		(*pt)++;
-		fprintf(fp,"%d", (*pt));
+		i++;
+		fprintf(fp,"%d", i);
 	}
 
 }
