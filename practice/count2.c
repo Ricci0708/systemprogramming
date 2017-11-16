@@ -3,165 +3,101 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-
-FILE* fp;
-FILE* ch;
+#include <fcntl.h>
+#include <time.h>
 
 int n;
+int fd;
 pid_t arr[3];
+pid_t next_pid;
+
+clock_t begin_time, end_time;
 
 char path[256];
-
-char path_0[256];
-char path_1[256];
-char path_2[256];
-
-char buf[10];
-// char r[256];
 
 void sig_fn();
 
 char get_status(char str[256]);
 
-int main(int argc, char* argv[]){
-	int isExist;
-	int a;
+void my_exiter() { exit(0); }
 
-	if(signal(SIGALRM, sig_fn) == SIG_ERR){
-		perror("siganl error!\n");
-	}
+int main(int argc, char *argv[])
+{
+    int isExist;
+    int a;
 
-	if(argc<= 1){
-		printf("need more arguments!\n");
-		exit(0);
-	}
+    if (signal(SIGALRM, sig_fn) == SIG_ERR)
+    {
+        perror("signal error!\n");
+    }
+    if (signal(SIGQUIT, my_exiter) == SIG_ERR) {
+        perror("signal error!\n");
+    }
 
-	n = atoi(argv[1]); //assign the number
-	strcpy(path, argv[2]);
+    if (argc <= 1)
+    {
+        printf("need more arguments!\n");
+        exit(0);
+    }
 
-	if(n <= 0){
-		printf("error! The nubmer should be larger than 0!\n");
-		exit(0);
-	}
-	isExist = access(argv[2], F_OK);
+    n = atoi(argv[1]); //assign the number
+    strcpy(path, argv[2]);
 
-	//the file exist
-	if(isExist == 0){
-		fp = fopen(argv[2],"r+");
-		int check;
-		fscanf(fp,"%d",&check);
+    if (n <= 0)
+    {
+        printf("error! The nubmer should be larger than 0!\n");
+        exit(0);
+    }
 
-		if(check != 0){
-			freopen(argv[2], "wb+", fp);
-			fprintf(fp, "%d", 0);
-		}
-	}
-	//file Not exist
-	else{
-		fp = fopen(argv[2], "w+");
-		fprintf(fp,"%d", 0);
-	}
-	arr[0] = getpid();
+    //the file exist
+    char check[256];
+    fd = open(argv[2], O_RDWR | O_CREAT, 0644);
+    pread(fd,check,20,0);
+    int check_ = atoi(check);
+    printf("%d\n",check_);
+    if(check_ != 0){
+        close(fd);
+        fd = open(argv[2], O_RDWR | O_TRUNC, 0644);
+    }
+    pwrite(fd, (void*)"0                  ", 20, 0);
 
+    arr[0] = getpid();
+    if ((arr[1] = fork()) == 0) {
+        if ((arr[2] = fork()) == 0) {
+            next_pid = arr[0];
+            printf("process: (%d) -> (%d)\n", getpid(), next_pid);
+            begin_time = clock();
+            kill(next_pid, SIGALRM);
+            for(;;) pause();
+        } else {
+            next_pid = arr[2];
+            printf("process: (%d) -> (%d)\n", getpid(), next_pid);
+            for(;;) pause();
+        }
+    } else { // Parent
+        next_pid = arr[1];
+        printf("process: (%d) -> (%d)\n", getpid(), next_pid);
+        for(;;) pause();
+    }
 
-	if((arr[1] = fork()) == 0){
-		//it is child process.
-		arr[1] = getpid();
-		if((arr[2] = fork()) == 0){
-			arr[2] = getpid();
-		}
-	}
-
-	sprintf(path_0,"ps h -eo s,pid | grep %d",arr[0]);
-	sprintf(path_1,"ps h -eo s,pid | grep %d",arr[1]);
-	sprintf(path_2,"ps h -eo s,pid | grep %d",arr[2]);
-
-	// for(int i =0; i< 3; ++i){
-	// 	printf("pid%d ; %d\n",i,arr[i]);
-	// }
-
-	if(getpid() == arr[0]){
-		alarm(1);
-	}
-
-	while(1){
-		rewind(fp);
-		fscanf(fp,"%d",&a);
-		printf("a ; %d\n", a);
-		if(a >= n){
-			break;
-		}
-		else{
-			if(getpid() == arr[0]){
-				// printf("p1\n");
-
-				pause();
-				while(1){
-					printf("p1\n");
-					if((ch = popen(path_1,"r") != NULL)){
-						kill(arr[1],SIGALRM);
-						break;
-					}
-				}
-				kill(arr[1],SIGALRM);
-			}
-			else if(getpid() == arr[1]){
-				// printf("p2\n");
-
-				pause();
-				while(1){
-					printf("p2\n");
-
-					if((ch = popen(path_2,"r") != NULL)){
-						kill(arr[2],SIGALRM);
-						break;
-					}
-				}
-				kill(arr[2],SIGALRM);
-			}
-			else{
-				// printf("p3\n");
-				pause();
-				while(1){
-					printf("p3\n");
-
-					if((ch = popen(path_0,"r") != NULL)){
-						kill(arr[0],SIGALRM);
-						break;
-					}
-				}
-				kill(arr[0],SIGALRM);
-			}
-		}
-	}
-	return 0;
+    return 0;
 }
 
-void sig_fn(){
-	FILE* fp2;
-	printf("sig_fn in\n");
+void sig_fn()
+{
+    char buffer[256];
+    pread(fd, buffer, 20, 0);
+    int now = atoi(buffer);
 
-	int i;
-	fp2 = fopen(path, "rw+");
-	fscanf(fp,"%d", &i);
-	printf("num in; %d\n",i);
+    if(now >= n) {
+        end_time = clock();
+        printf("time: %f\n", (double)(end_time - begin_time) / CLOCKS_PER_SEC);
+        kill(arr[0], SIGQUIT);
+        exit(1);
+    }
 
-	if(i < n){
-		// freopen(path,"ab",fp2);
-		rewind(fp2);
-		sprintf(buf, "%d", ++i);
-		fwrite(buf,strlen(buf),1,fp2);
-		// fprintf(fp2,"%d",++i);
-	}
-	fsync(fp2);
-	fclose(fp2);
-	printf("num out; %d\n",i);
-	printf("sig_fn out\n");
+    sprintf(buffer, "%d             ", now + 1);
+    pwrite(fd, buffer, 20, 0);
+
+    kill(next_pid, SIGALRM);
 }
-// char get_status(char str[256]){
-// 	ch = popen(str, "r");
-// 	for(int i=0;i <3; ++i){
-// 		fgets(r,256,ch);
-// 	}
-// 	return(r[7]);
-// }
