@@ -23,5 +23,8 @@ void sig_fn(){
 }
 
 void HandleSignal(int sig, siginfo_t *si, void* context){
-	sig_fn();	
+	if(sig == 2){
+		sig_fn();	
+
+	}
 }

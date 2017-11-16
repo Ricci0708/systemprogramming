@@ -51,7 +51,9 @@ int main(int argc, char *argv[])
 
     //the file exist
     char check[256];
-    fd = open(argv[2], O_RDWR | O_CREAT, 0644);
+    if((fd = open(argv[2], O_RDWR)) < 0){
+        fd = open(argv[2], O_RDWR | O_CREAT, 0644);
+    }
     pread(fd,check,20,0);
     int check_ = atoi(check);
     printf("%d\n",check_);
