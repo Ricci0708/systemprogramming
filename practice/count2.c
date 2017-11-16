@@ -53,14 +53,22 @@ int main(int argc, char *argv[])
     char check[256];
     if((fd = open(argv[2], O_RDWR)) < 0){
         fd = open(argv[2], O_RDWR | O_CREAT, 0644);
+        pwrite(fd, (void*)"0                  ", 20, 0);
+
     }
-    pread(fd,check,20,0);
-    int check_ = atoi(check);
-    printf("%d\n",check_);
-    if(check_ != 0){
-        close(fd);
-        fd = open(argv[2], O_RDWR | O_TRUNC, 0644);
+    else{
+        pread(fd,check,20,0);
+        int check_ = atoi(check);
+        // printf("%d\n",check_);
+        if(check_ != 0){
+            close(fd);
+            fd = open(argv[2], O_RDWR | O_TRUNC, 0644);
+            pwrite(fd, (void*)"0                  ", 20, 0);
+
+        }
+
     }
+
     pwrite(fd, (void*)"0                  ", 20, 0);
 
     arr[0] = getpid();
